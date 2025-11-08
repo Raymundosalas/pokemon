@@ -1,0 +1,88 @@
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
+void main() {
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Consulta de Pokémon',
+      theme: ThemeData(primarySwatch: Colors.blue),
+      home: const PokemonPage(),
+      debugShowCheckedModeBanner: false,
+    );
+  }
+}
+
+class PokemonPage extends StatefulWidget {
+  const PokemonPage({super.key});
+
+  @override
+  State<PokemonPage> createState() => _PokemonPageState();
+}
+
+class _PokemonPageState extends State<PokemonPage> {
+  Map<String, dynamic>? pokemonData;
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchPokemon();
+  }
+
+  Future<void> fetchPokemon() async {
+    final url = Uri.parse('https://pokeapi.co/api/v2/pokemon/pikachu');
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      setState(() {
+        pokemonData = json.decode(response.body);
+        isLoading = false;
+      });
+    } else {
+      throw Exception('Error al obtener datos del Pokémon');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('PokeAPI Ejemplo')),
+      body: Center(
+        child: isLoading
+            ? const CircularProgressIndicator()
+            : pokemonData == null
+                ? const Text('Error al cargar datos')
+                : Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Image.network(
+                        pokemonData!['sprites']['front_default'],
+                        height: 150,
+                      ),
+                      const SizedBox(height: 20),
+                      Text(
+                        pokemonData!['name'].toString().toUpperCase(),
+                        style: const TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        "Tipo: ${pokemonData!['types'][0]['type']['name']}",
+                        style: const TextStyle(fontSize: 20),
+                      ),
+                    ],
+                  ),
+      ),
+    );
+  }
+}
